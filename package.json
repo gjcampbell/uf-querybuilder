@@ -1,0 +1,54 @@
+{
+    "name": "uf-querybuilder",
+    "version": "1.0.0",
+    "description": "User Friendly Query Builder",
+    "main": "index.js",
+    "repository": "https://github.com/gjcampbell/uf-querybuilder.git",
+    "author": "Gabriel Campbell gjcampbell",
+    "license": "MIT",
+    "scripts": {
+        "start": "parcel ./demo/index.html"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.4.5",
+        "@babel/plugin-transform-react-jsx": "^7.3.0",
+        "@babel/plugin-transform-runtime": "^7.4.4",
+        "@babel/preset-flow": "^7.0.0",
+        "@material-ui/core": "^4.0.0",
+        "@types/react": "^16.8.18",
+        "@types/react-dom": "^16.8.4",
+        "@types/styled-components": "^4.1.15",
+        "babel-preset-env": "^1.7.0",
+        "mobx": "^5.9.4",
+        "mobx-react": "^5.4.4",
+        "parcel": "^1.12.3",
+        "react": "^15.3.0 || ^16.0.0-alpha",
+        "react-dom": "^15.3.0 || ^16.0.0-alpha",
+        "styled-components": "^4.2.0",
+        "typescript": "^3.4.5"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 160,
+        "singleQuote": true
+    },
+    "babel": {
+        "presets": [
+            "env",
+            "@babel/preset-flow"
+        ],
+        "plugins": [
+            "@babel/plugin-transform-runtime",
+            [
+                "@babel/plugin-transform-react-jsx",
+                {
+                    "pragma": "React.createElement"
+                }
+            ]
+        ]
+    },
+    "dependencies": {
+        "@types/react-virtualized": "^9.21.1",
+        "react-virtualized": "^9.21.1"
+    }
+}
