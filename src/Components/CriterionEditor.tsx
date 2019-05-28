@@ -1,14 +1,6 @@
 import * as React from 'react';
 import { observer } from 'mobx-react';
-import {
-    NestedField,
-    IExpression,
-    Criterion,
-    CriteriaGroup,
-    OpIds,
-    IConditionalExpression,
-    Parameter
-} from '../Models/ExpressionModels';
+import { NestedField, IExpression, Criterion, CriteriaGroup, OpIds, IConditionalExpression, Parameter } from '../Models/ExpressionModels';
 import HasInnerMatch from './HasInnerMatch';
 import { dependencies, DiComponent, IConditionExprComponent, IConfigAccessor, IHighlightAccessor } from './Types';
 import { ExprRow, EmptyText, OperandEl } from './Style';
@@ -25,10 +17,7 @@ const compatibleOpSets = [
 
 @dependencies('builder', 'highlight')
 @observer
-export default class CriterionEditor extends DiComponent<
-    IConditionExprComponent<Criterion>,
-    IConfigAccessor & IHighlightAccessor
-> {
+export default class CriterionEditor extends DiComponent<IConditionExprComponent<Criterion>, IConfigAccessor & IHighlightAccessor> {
     render() {
         const operator = this.dep.builder.getUfOperator(this.props.model);
         return (
@@ -79,23 +68,13 @@ export default class CriterionEditor extends DiComponent<
             />
         );
     }
-    renderOperand(
-        opposite: IExpression | undefined,
-        expr: IExpression | undefined,
-        setter: (expr?: IExpression) => void,
-        findBestValueEditor: boolean
-    ) {
+    renderOperand(opposite: IExpression | undefined, expr: IExpression | undefined, setter: (expr?: IExpression) => void, findBestValueEditor: boolean) {
         let result = null;
 
         if (expr) {
             const moreProps = { update: setter, remove: () => setter(undefined) };
             if (expr instanceof Parameter && findBestValueEditor) {
-                result = this.dep.builder.editorFactory.renderValueEditor(
-                    expr,
-                    opposite,
-                    this.props.model.operator,
-                    moreProps
-                );
+                result = this.dep.builder.editorFactory.renderValueEditor(expr, opposite, this.props.model.operator, moreProps);
             } else {
                 result = this.dep.builder.editorFactory.renderExpr(expr, moreProps);
             }
@@ -106,12 +85,8 @@ export default class CriterionEditor extends DiComponent<
         return result;
     }
     renderEmpty(setter: (expr?: IExpression) => void) {
-        const options = this.dep.builder.getExprOptions(this.props.model, [NestedField, Parameter]);
-        return this.dep.builder.viewOnly() ? (
-            <EmptyText />
-        ) : (
-            <ExprPicker onCreated={e => setter(e)} options={options} />
-        );
+        const options = this.dep.builder.getExprOptions(this.props.model);
+        return this.dep.builder.viewOnly() ? <EmptyText /> : <ExprPicker onCreated={e => setter(e)} options={options} />;
     }
     handleLeftOpChange(operand?: IExpression) {
         const prev = this.props.model.leftOperand,

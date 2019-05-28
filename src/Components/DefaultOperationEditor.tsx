@@ -114,7 +114,7 @@ export default class DefaultOperationEditor extends DiComponent<IExprComponent<O
         }
     }
     renderEmptyOperand(idx: number, config?: IOperationParam) {
-        const options = this.dep.builder.getExprOptions(this.props.model, [NestedField, Parameter, IfOperation]);
+        const options = this.dep.builder.getExprOptions(this.props.model, config ? config.type : undefined, config);
 
         return this.dep.builder.viewOnly() ? (
             <OperandTextEl>

@@ -9,7 +9,6 @@ import ExprPicker from './ExprPicker';
 interface ICodeBuilderElProps {
     builder: CodeBuilder;
     highlightExpr?: IExpression;
-    onChange: (code?: IExpression) => void;
 }
 
 @observer
@@ -19,33 +18,19 @@ export default class CodeBuilderEditor extends React.Component<ICodeBuilderElPro
     private fieldStore = observable.object({ fields: [] }) as { fields: any[] };
     render() {
         return (
-            <Provider
-                builder={this.props.builder}
-                highlight={this.highlight}
-                fieldStore={this.fieldStore}
-                scope={this.defaultScope}
-            >
+            <Provider builder={this.props.builder} highlight={this.highlight} fieldStore={this.fieldStore} scope={this.defaultScope}>
                 <>
                     {this.props.builder.code && this.props.builder.editorFactory.canRender(this.props.builder.code)
-                        ? this.props.builder.editorFactory.renderReplaceableExpr(
-                              this.props.builder.code,
-                              m => this.updateCode(m),
-                              {
-                                  remove: () => this.updateCode(undefined)
-                              }
-                          )
+                        ? this.props.builder.editorFactory.renderReplaceableExpr(this.props.builder.code, m => this.updateCode(m), {
+                              remove: () => this.updateCode(undefined)
+                          })
                         : this.renderRootSelector()}
                 </>
             </Provider>
         );
     }
     renderRootSelector() {
-        const allOptions = this.props.builder.getExprOptions(undefined, [
-                ChooseOperation,
-                IfOperation,
-                Parameter,
-                NestedField
-            ]),
+        const allOptions = this.props.builder.getExprOptions(undefined),
             knownOptions = allOptions.filter(o => o.knownType),
             otherOptions = allOptions.filter(o => !o.knownType);
 
@@ -56,7 +41,7 @@ export default class CodeBuilderEditor extends React.Component<ICodeBuilderElPro
                         <i className="fa fa-plus" /> {' Add ' + (o.ufName || o.name)}
                     </OperandText>
                 ))}
-                <ExprPicker options={otherOptions} text="Other..." onCreated={e => this.updateCode(e)} />
+                {allOptions.length === knownOptions.length ? null : <ExprPicker options={otherOptions} text="Other..." onCreated={e => this.updateCode(e)} />}
             </>
         );
     }
@@ -64,9 +49,8 @@ export default class CodeBuilderEditor extends React.Component<ICodeBuilderElPro
         this.fieldStore.fields = this.props.builder.getFields();
     }
     updateCode(code?: IExpression | null) {
-        this.props.onChange(code || undefined);
-        this.props.builder.raiseChange(code);
         this.props.builder.code = code || Empty.instance;
+        this.props.builder.raiseChange(code);
     }
     componentDidUpdate(prevProps: ICodeBuilderElProps) {
         if (prevProps.highlightExpr !== this.props.highlightExpr) {

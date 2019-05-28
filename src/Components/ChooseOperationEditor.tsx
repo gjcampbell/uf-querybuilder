@@ -95,7 +95,7 @@ export default class ChooseOperationEditor extends DiComponent<IExprComponent<Ch
         );
     }
     renderBlankThen(idx: number) {
-        const options = this.dep.builder.getExprOptions(this.props.model, [NestedField, Parameter, IfOperation]);
+        const options = this.dep.builder.getExprOptions(this.props.model);
         return this.dep.builder.viewOnly() ? (
             <EmptyText />
         ) : (

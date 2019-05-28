@@ -66,7 +66,7 @@ export default class IfOperationEditor extends DiComponent<IExprComponent<IfOper
         );
     }
     renderOptionsBlank(setter: (expr: IExpression) => void) {
-        const options = this.dep.builder.getExprOptions(this.props.model, [NestedField, Parameter, IfOperation]);
+        const options = this.dep.builder.getExprOptions(this.props.model);
         return this.dep.builder.viewOnly() ? <EmptyText /> : <ExprPicker onCreated={e => setter(e)} options={options} />;
     }
     private setCondition(childType: ExprConstructor) {

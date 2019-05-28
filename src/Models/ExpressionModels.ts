@@ -1,8 +1,9 @@
 ﻿import { observable, computed } from 'mobx';
-const exprTypes = new Map<string, { ctor: new () => IExpression; condition?: (expr: any) => boolean }[]>();
-const typeNames = new Map<Function, string>();
+export const exprTypes = new Map<string, { ctor: new () => IExpression; condition?: (expr: any) => boolean }[]>();
+export const exprTypeNames = new Map<Function, { name: string; type: TypeName }>();
 
 export enum TypeName {
+    any = 0,
     null = 1,
     boolean = 1 << 1,
     array = 1 << 2,
@@ -46,12 +47,12 @@ export interface IConditionalExpression extends IExpression {}
 
 type Connector = 'and' | 'or';
 
-@Expr('Empty')
+@Expr('Empty', undefined, TypeName.null)
 export class Empty implements IExpression {
     public static instance: Empty = new Empty();
 }
 
-@Expr('CriteriaGroup')
+@Expr('CriteriaGroup', undefined, TypeName.boolean)
 export class CriteriaGroup implements IConditionalExpression {
     @observable
     public criteria: IExpression[] = [];
@@ -83,7 +84,7 @@ export class CriteriaGroup implements IConditionalExpression {
     }
 }
 
-@Expr('Criterion')
+@Expr('Criterion', undefined, TypeName.boolean)
 export class Criterion implements IConditionalExpression {
     @observable
     public leftOperand?: IExpression;
@@ -232,17 +233,19 @@ export abstract class VisitorBase<T> {
     public abstract visitNull(): T;
 }
 
-function Expr(name?: string, condition?: (expr: any) => boolean) {
+function Expr(name?: string, condition?: (expr: any) => boolean, type?: TypeName) {
     return (ctor: new (...args: any[]) => IExpression) => {
-        const typeName = name || ctor.name,
-            typeEntry = { ctor, condition };
+        name = name || ctor.name;
+        type = type || TypeName.any;
+        const typeEntry = { ctor, condition },
+            nameEntry = { name, type };
 
-        typeNames.set(ctor, typeName);
+        exprTypeNames.set(ctor, nameEntry);
 
-        if (!exprTypes.has(typeName)) {
-            exprTypes.set(typeName, []);
+        if (!exprTypes.has(name)) {
+            exprTypes.set(name, []);
         }
-        exprTypes.get(typeName)!.unshift(typeEntry);
+        exprTypes.get(name)!.unshift(typeEntry);
     };
 }
 
@@ -258,8 +261,8 @@ export class Serializer {
 
         if (expr instanceof Array) {
             result = expr.map(Serializer.toJson);
-        } else if (expr && typeof expr === 'object' && expr.constructor && typeNames.has(expr.constructor)) {
-            result = { $type: typeNames.get(expr.constructor) };
+        } else if (expr && typeof expr === 'object' && expr.constructor && exprTypeNames.has(expr.constructor)) {
+            result = { $type: exprTypeNames.get(expr.constructor)!.name };
 
             if ('toJson' in expr) {
                 result = (<ICustomSerialization>expr).toJson();
@@ -282,8 +285,7 @@ export class Serializer {
             result = exprJson.map(Serializer.fromJson);
         } else if (exprJson && exprJson.$type && exprTypes.has(exprJson.$type)) {
             const ExprTypes = exprTypes.get(exprJson.$type),
-                BestType =
-                    ExprTypes!.find(t => !!t.condition && t.condition(exprJson)) || ExprTypes!.find(t => !t.condition);
+                BestType = ExprTypes!.find(t => !!t.condition && t.condition(exprJson)) || ExprTypes!.find(t => !t.condition);
 
             result = new BestType!.ctor();
 

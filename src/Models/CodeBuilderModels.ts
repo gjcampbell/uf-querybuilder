@@ -1,5 +1,17 @@
 import { observable } from 'mobx';
-import { IExpression, OpIds, Criterion, TypeName, CriteriaGroup, NestedField, Parameter, IfOperation, Operation, ChooseOperation } from './ExpressionModels';
+import {
+    exprTypeNames,
+    IExpression,
+    OpIds,
+    Criterion,
+    TypeName,
+    CriteriaGroup,
+    NestedField,
+    Parameter,
+    IfOperation,
+    Operation,
+    ChooseOperation
+} from './ExpressionModels';
 import { IExprEditorFactory } from './EditorInterfaces';
 import defaultExprEditorFactory from '../Components/DefaultExprEditorFactory';
 
@@ -138,10 +150,13 @@ export interface ICodeBuilderConfig {
     exprTypes: Map<ExprConstructor, UfExpression>;
     createDefaultExpr?: (type: ExprConstructor, parent?: IExpression) => IExpression | undefined | null;
     operations: IOperationConfig[];
+    getExprOptions?: (parent: IExpression | undefined, type?: TypeName, param?: IOperationParam) => IExprOption[] | undefined | null;
     viewOnly?: boolean;
     editorFactory: IExprEditorFactory;
     onChange?: (expr?: IExpression) => void;
 }
+
+const knownExprTypes = [NestedField, Parameter, IfOperation, ChooseOperation, Criterion, CriteriaGroup];
 
 const sortFields = (fields: NestedField[]) => {
     return fields.slice().sort((a, b) => {
@@ -223,7 +238,8 @@ export class CodeBuilder {
             operations: config.operations || [],
             viewOnly: config.viewOnly || false,
             editorFactory: config.editorFactory || defaultExprEditorFactory,
-            onChange: config.onChange
+            onChange: config.onChange,
+            getExprOptions: config.getExprOptions
         };
         this.nestedFields = config.dataSource.fields;
     }
@@ -274,14 +290,27 @@ export class CodeBuilder {
         return result as T;
     }
 
-    public getExprOptions(parent: IExpression | undefined, knownTypes: ExprConstructor[]): IExprOption[] {
-        const result = this.getOperationOptions();
+    public getExprOptions(parent: IExpression | undefined, type?: TypeName, param?: IOperationParam): IExprOption[] {
+        type = type || TypeName.any;
+        let options: IExprOption[] | undefined | null = this.config.getExprOptions ? this.config.getExprOptions(parent, type, param) : undefined;
 
-        knownTypes
-            .slice()
-            .reverse()
+        if (options === undefined) {
+            return this.getDefaultExprOptions(parent, type, param);
+        } else if (options === null) {
+            return [];
+        } else {
+            return options!;
+        }
+    }
+
+    public getDefaultExprOptions(parent: IExpression | undefined, type?: TypeName, param?: IOperationParam) {
+        type = type || TypeName.any;
+        const result = this.getOperationOptions(parent, type);
+
+        [...exprTypeNames.keys()]
+            .filter(t => (exprTypeNames.get(t)!.type & type!) === type || exprTypeNames.get(t)!.type === TypeName.any)
             .forEach(t => {
-                const option = this.getOptionForKnownExpr(t, parent);
+                const option = this.getOptionForKnownExpr(t as ExprConstructor, parent);
                 if (option) {
                     result.unshift(option);
                 }
@@ -290,23 +319,28 @@ export class CodeBuilder {
         return result;
     }
 
-    public getOperationOptions(parent?: IExpression): IExprOption[] {
-        return this.config.operations.map(
-            o =>
-                ({
-                    name: o.name,
-                    ufName: o.ufName,
-                    description: o.description,
-                    createExpr: () => this.createOperation(o, parent)
-                } as IExprOption)
-        );
+    private getOperationOptions(parent: IExpression | undefined, type: TypeName): IExprOption[] {
+        return this.config.operations
+            .filter(o => (o.returnType & type) === type || o.returnType === TypeName.any)
+            .map(o => this.createOperationOption(o, parent));
     }
 
-    public getOptionForKnownExpr(expr: ExprConstructor, parent?: IExpression): IExprOption | null {
-        if (expr === IfOperation) return { name: 'If-then-else', knownType: true, createExpr: () => this.createDefaultExpr(IfOperation)! };
-        if (expr === NestedField) return { name: 'Field Value', knownType: true, createExpr: () => this.createDefaultExpr(NestedField)! };
-        if (expr === Parameter) return { name: 'Static Value', knownType: true, createExpr: () => this.createDefaultExpr(Parameter)! };
-        if (expr === ChooseOperation) return { name: 'Choose', knownType: true, createExpr: () => this.createDefaultExpr(ChooseOperation)! };
+    public createOperationOption(op: IOperationConfig, parent?: IExpression) {
+        return {
+            name: op.name,
+            ufName: op.ufName,
+            description: op.description,
+            createExpr: () => this.createOperation(op, parent)
+        } as IExprOption;
+    }
+
+    private getOptionForKnownExpr(expr: ExprConstructor, parent: IExpression | undefined): IExprOption | null {
+        if (expr === Criterion) return { name: 'Rule', knownType: true, createExpr: () => this.createDefaultExpr(Criterion, parent)! };
+        if (expr === CriteriaGroup) return { name: 'Rule Group', knownType: true, createExpr: () => this.createDefaultExpr(CriteriaGroup, parent)! };
+        if (expr === IfOperation) return { name: 'If-then-else', knownType: true, createExpr: () => this.createDefaultExpr(IfOperation, parent)! };
+        if (expr === NestedField) return { name: 'Field Value', knownType: true, createExpr: () => this.createDefaultExpr(NestedField, parent)! };
+        if (expr === Parameter) return { name: 'Static Value', knownType: true, createExpr: () => this.createDefaultExpr(Parameter, parent)! };
+        if (expr === ChooseOperation) return { name: 'Choose', knownType: true, createExpr: () => this.createDefaultExpr(ChooseOperation, parent)! };
         return null;
     }
 

@@ -1,58 +1,42 @@
 import * as React from 'react';
-import CodeBuilderEditor from '../../src/Components/CodeBuilderEditor';
-import { CodeBuilder, ExprConstructor, IOperationConfig } from '../../src/Models/CodeBuilderModels';
-import { NestedField, TypeName, Criterion, OpIds, Parameter, CriteriaGroup, IExpression } from '../../src/Models/ExpressionModels';
+import FieldLoader, { YelpFieldLoader } from './Demo/FieldLoader';
+import { observer } from 'mobx-react';
+import { observable } from 'mobx';
+import { NestedField, IExpression } from '../../src/Models/ExpressionModels';
+import QueryBuilder from './Demo/QueryBuilder';
+import ElasticQuery from './Demo/ElasticQuery';
+import { GridResultViewer } from './Demo/ResultViewer';
+import { PanelContainer, Panel, Section } from '../Styles';
+import { Typography } from '@material-ui/core';
 
-const operations: IOperationConfig[] = [
-    {
-        name: 'max',
-        ufName: 'Largest',
-        defaultOperands: () => [NestedField],
-        parameters: [{ name: 'of', type: TypeName.array }],
-        returnType: TypeName.number
-    },
-    {
-        name: 'min',
-        ufName: 'Smallest',
-        defaultOperands: () => [NestedField],
-        parameters: [{ name: 'of', type: TypeName.array }],
-        returnType: TypeName.number
-    },
-    {
-        name: 'from',
-        ufName: 'List',
-        defaultOperands: () => [NestedField],
-        parameters: [{ name: 'of', type: TypeName.string | TypeName.number, description: 'whast' }],
-        returnType: TypeName.array
-    }
-];
-
+@observer
 export default class Demo extends React.Component {
-    private builder = new CodeBuilder({
-        dataSource: { fields: [] },
-        operations: operations,
-        createDefaultExpr: (type, parent) => this.createExpr(type, parent)
-    });
+    @observable
+    private fields: NestedField[] = [];
+
+    @observable
+    private expr: { query?: IExpression } = {};
+
     render() {
-        return <CodeBuilderEditor builder={this.builder} onChange={() => {}} />;
-    }
-    componentDidMount() {
-        this.builder.setFields([
-            new NestedField(['name'], false, TypeName.string),
-            new NestedField(['sizes', 'us'], false, TypeName.number),
-            new NestedField(['sizes', 'uk'], false, TypeName.number),
-            new NestedField(['sizes'], false, TypeName.array)
-        ]);
-    }
-    createExpr(type: ExprConstructor, parent?: IExpression) {
-        if (type === Criterion) {
-            return new Criterion(new NestedField(['name'], undefined, TypeName.string), OpIds.Eq, new Parameter('some text', TypeName.string));
-        } else if (type === CriteriaGroup) {
-            if (parent instanceof CriteriaGroup) {
-                const result = new CriteriaGroup();
-                result.connector = parent.connector === 'and' ? 'or' : 'and';
-                return result;
-            }
-        }
+        return (
+            <PanelContainer>
+                <Panel width="sm">
+                    <Section pad>Demo</Section>
+                </Panel>
+                <YelpFieldLoader onChange={fields => (this.fields = fields)} />
+                <Panel width="md">
+                    <QueryBuilder fields={this.fields} onChange={expr => (this.expr = expr)} />
+                    <Section pad>
+                        <Typography>Elastic Query</Typography>
+                    </Section>
+                    <Section pad style={{ maxHeight: '300px' }}>
+                        <ElasticQuery expr={this.expr} />
+                    </Section>
+                </Panel>
+                <Panel width="lg">
+                    <GridResultViewer expr={this.expr} index="yelp" />
+                </Panel>
+            </PanelContainer>
+        );
     }
 }

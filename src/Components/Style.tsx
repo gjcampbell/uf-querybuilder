@@ -59,20 +59,10 @@ export class OperandText extends React.Component<{
     highlight?: boolean;
 }> {
     render() {
-        return this.props.tooltip ? (
-            <Tooltip title={this.props.tooltip}>{this.renderText()}</Tooltip>
-        ) : (
-            this.renderText()
-        );
+        return this.props.tooltip ? <Tooltip title={this.props.tooltip}>{this.renderText()}</Tooltip> : this.renderText();
     }
     renderText() {
-        return (
-            <OperandTextEl
-                href={this.props.tabbable ? 'javascript:' : undefined}
-                ref={this.props.anchorRef}
-                {...this.props}
-            />
-        );
+        return <OperandTextEl href={this.props.tabbable ? 'javascript:' : undefined} ref={this.props.anchorRef} {...this.props} />;
     }
 }
 
@@ -176,6 +166,7 @@ export const OperandTextEl = styled.a<{
     padding: 2px 4px;
     background: ${p => (p.highlight ? colors.labels.highlight : 'none')};
     cursor: ${p => (p.unclickable ? 'default' : 'pointer')};
+    text-decoration: none;
     :hover {
         text-decoration: ${p => (p.unclickable ? 'none' : 'underline')};
         color: ${p => p.color};
