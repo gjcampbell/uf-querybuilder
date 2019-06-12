@@ -3,7 +3,6 @@ import TextField from '@material-ui/core/TextField';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 import { NestedField, TypeName } from '../../../src/Models/ExpressionModels';
-import { string } from 'prop-types';
 import { EsService } from './Services';
 
 interface IFieldLoaderProps {

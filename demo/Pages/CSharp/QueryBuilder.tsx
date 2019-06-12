@@ -1,10 +1,26 @@
 import * as React from 'react';
 import CodeBuilderEditor from '../../../src/Components/CodeBuilderEditor';
 import { CodeBuilder, ExprConstructor, IOperationConfig, IOperationParam, IExprOption } from '../../../src/Models/CodeBuilderModels';
-import { NestedField, TypeName, Criterion, OpIds, Parameter, CriteriaGroup, IExpression } from '../../../src/Models/ExpressionModels';
+import {
+    NestedField,
+    TypeName,
+    Criterion,
+    OpIds,
+    Parameter,
+    CriteriaGroup,
+    IExpression,
+    IfOperation,
+    Operation,
+    ChooseOperation,
+    Expr
+} from '../../../src/Models/ExpressionModels';
 import CriteriaGroupEditor from '../../../src/Components/CriteriaGroupEditor';
 import { Section } from '../../Styles';
 import { Button, Typography } from '@material-ui/core';
+import defaultExprEditorFactory from '../../../src/Components/DefaultExprEditorFactory';
+import { IExprEditorFactory } from '../../../src/Models/EditorInterfaces';
+import { dependencies } from '../../../src/Components/Types';
+import { observer } from 'mobx-react';
 
 const filterOperation = {
     name: 'filter',
@@ -15,46 +31,66 @@ const filterOperation = {
     layoutVertically: true
 };
 
-const operations: IOperationConfig[] = [
-    {
+const maxOp = {
         name: 'max',
         ufName: 'Largest',
         defaultOperands: () => [NestedField],
         parameters: [{ name: 'of', type: TypeName.array }],
         returnType: TypeName.number
     },
-    {
+    minOp = {
         name: 'min',
         ufName: 'Smallest',
         defaultOperands: () => [NestedField],
         parameters: [{ name: 'of', type: TypeName.array }],
         returnType: TypeName.number
     },
-    {
+    sumOp = {
         name: 'sum',
         ufName: 'Sum',
         defaultOperands: () => [NestedField],
-        parameters: [{name: 'of', type: TypeName.number}],
+        parameters: [{ name: 'of', type: TypeName.number }],
         returnType: TypeName.number
     },
-    {
+    avgOp = {
         name: 'avg',
         ufName: 'Average',
         defaultOperands: () => [NestedField],
-        parameters: [{name: 'of', type: TypeName.number}],
+        parameters: [{ name: 'of', type: TypeName.number }],
         returnType: TypeName.number
     },
-    {
+    roundOp = {
+        name: 'round',
+        ufName: 'Round',
+        defaultOperands: () => [NestedField],
+        parameters: [{ name: 'of', type: TypeName.number }],
+        returnType: TypeName.number
+    },
+    fromOp = {
         name: 'from',
         ufName: 'List',
         defaultOperands: () => [NestedField],
         parameters: [{ name: 'of', type: TypeName.string | TypeName.number, description: 'whast' }],
         returnType: TypeName.array
+    },
+    operations: IOperationConfig[] = [minOp, maxOp, sumOp, avgOp, roundOp, fromOp];
+
+const editorFactory = {
+    canRender: defaultExprEditorFactory.canRender,
+    renderReplaceableExpr: defaultExprEditorFactory.renderReplaceableExpr,
+    renderValueEditor: defaultExprEditorFactory.renderValueEditor,
+    renderExpr: (model: IExpression, moreProps?: any) => {
+        if (model instanceof MathOperation) {
+            return <MathEditor model={model} {...moreProps} />;
+        } else {
+            return defaultExprEditorFactory.renderExpr(model, moreProps);
+        }
     }
-];
+} as IExprEditorFactory;
 
 interface IQueryBuilderProps {
     fields: NestedField[];
+    highlight?: IExpression;
     onChange: (data: { query?: IExpression }) => void;
 }
 
@@ -63,15 +99,14 @@ export default class QueryBuilder extends React.Component<IQueryBuilderProps> {
         dataSource: { fields: this.props.fields },
         operations: operations,
         createDefaultExpr: (type, parent) => this.createExpr(type, parent),
-        onChange: () => this.handleCodeChange(),
-        getExprOptions: (parent, type, param) => this.getExprOptions(parent, type, param)
+        editorFactory: undefined,
+        onChange: () => this.handleCodeChange()
     });
     render() {
         return (
             <>
                 <Section pad>
                     <Typography variant="h5">Query Builder</Typography>
-      
                 </Section>
                 <Section style={{ textAlign: 'right' }}>
                     <Button onClick={() => this.clear()}>
@@ -80,7 +115,7 @@ export default class QueryBuilder extends React.Component<IQueryBuilderProps> {
                     </Button>
                 </Section>
                 <Section pad fill>
-                    <CodeBuilderEditor builder={this.builder} />
+                    <CodeBuilderEditor highlightExpr={this.props.highlight} builder={this.builder} />
                 </Section>
             </>
         );
@@ -104,16 +139,16 @@ export default class QueryBuilder extends React.Component<IQueryBuilderProps> {
             }
         }
     }
-    getExprOptions(parent?: IExpression, type?: TypeName, param?: IOperationParam): IExprOption[] | undefined {
-        if (!parent) {
-            return [
-                { name: 'Rule', knownType: true, createExpr: () => this.builder.createDefaultExpr(Criterion)! },
-                { name: 'Rule Group', knownType: true, createExpr: () => this.builder.createDefaultExpr(CriteriaGroup)! }
-            ];
-        }
-    }
+
     private clear() {
         this.builder.code = undefined;
         this.handleCodeChange();
     }
 }
+
+@Expr('Operation', e => e.name.toLowerCase() === 'if')
+class MathOperation extends Operation {}
+
+@dependencies('builder', 'highlight')
+@observer
+class MathEditor extends React.Component {}

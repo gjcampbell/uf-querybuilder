@@ -22,13 +22,14 @@ export const Panel = styled.div<{ width?: 'sm' | 'md' | 'lg' | number }>`
     background: #fff;
     box-shadow: ${common.shadow.default};
     clip-path: inset(0 0 0 -15px);
+    width: ${p => (typeof p.width === 'number' ? p.width : typeof p.width === 'string' ? panelWidths[p.width] : 300)}px;
     flex: 0 0 ${p => (typeof p.width === 'number' ? p.width : typeof p.width === 'string' ? panelWidths[p.width] : 300)}px;
 `;
 
-export const Section = styled.div<{ fill?: boolean; pad?: boolean }>`
+export const Section = styled.div<{ fill?: boolean; pad?: boolean; noborder?: boolean }>`
     padding: ${p => (p.pad ? '10px 20px' : '0')};
     flex: ${p => (p.fill ? '1 1 100%' : '0 0 auto')};
-    border-bottom: solid 1px ${colors.border.faint};
+    border-bottom: solid 1px ${p => (p.noborder ? '#0000' : colors.border.faint)};
     overflow: auto;
 `;
 

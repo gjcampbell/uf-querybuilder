@@ -233,7 +233,7 @@ export abstract class VisitorBase<T> {
     public abstract visitNull(): T;
 }
 
-function Expr(name?: string, condition?: (expr: any) => boolean, type?: TypeName) {
+export function Expr(name?: string, condition?: (expr: any) => boolean, type?: TypeName) {
     return (ctor: new (...args: any[]) => IExpression) => {
         name = name || ctor.name;
         type = type || TypeName.any;
