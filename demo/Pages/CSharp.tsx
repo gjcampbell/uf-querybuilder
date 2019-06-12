@@ -32,7 +32,7 @@ export default class CSharp extends React.Component {
                     <Section pad>
                         <Typography>C# Preview</Typography>
                     </Section>
-                    <Section pad style={{ maxHeight: '300px' }}>
+                    <Section pad style={{ maxHeight: '300px' }} onMouseLeave={() => (this.highlight = undefined)}>
                         <CSharpPreview>{ExprVisitorCs.visit(this.expr.query, expr => (this.highlight = expr))}</CSharpPreview>
                     </Section>
                 </Panel>

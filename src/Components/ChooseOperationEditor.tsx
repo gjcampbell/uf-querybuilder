@@ -1,24 +1,14 @@
 import * as React from 'react';
 import { observer } from 'mobx-react';
-import { dependencies, DiComponent, IExprComponent, IConfigAccessor } from './Types';
-import {
-    ChooseOperation,
-    IExpression,
-    CriteriaGroup,
-    Criterion,
-    NestedField,
-    Parameter,
-    IfOperation,
-    IConditionalExpression,
-    copyExpr
-} from '../Models/ExpressionModels';
+import { dependencies, DiComponent, IExprComponent, IConfigAccessor, IHighlightAccessor } from './Types';
+import { ChooseOperation, IExpression, CriteriaGroup, Criterion, Parameter, IConditionalExpression, copyExpr } from '../Models/ExpressionModels';
 import { GroupContainer, GroupHeader, OperationName, GroupBody, ExprRow, OperandText, ExprRowLabel, EmptyText, colors } from './Style';
 import ExprPicker from './ExprPicker';
 import { ExprConstructor } from '../Models/CodeBuilderModels';
 
-@dependencies('builder')
+@dependencies('builder', 'highlight')
 @observer
-export default class ChooseOperationEditor extends DiComponent<IExprComponent<ChooseOperation>, IConfigAccessor> {
+export default class ChooseOperationEditor extends DiComponent<IExprComponent<ChooseOperation>, IConfigAccessor & IHighlightAccessor> {
     render() {
         return (
             <GroupContainer>

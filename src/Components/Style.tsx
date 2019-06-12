@@ -103,8 +103,8 @@ export const GroupBody = styled.div`
     padding: 5px 0;
 `;
 
-export const OperationName = styled.a`
-    border-radius: 3px;
+export const OperationName = styled.a<{ roundAll?: boolean, rounding?: number }>`
+    border-radius: ${p => p.rounding || 3}px;
     background-color: ${p => p.color};
     color: #fff;
     font-weight: bold;
@@ -112,8 +112,8 @@ export const OperationName = styled.a`
     white-space: nowrap;
     text-transform: uppercase;
     padding: 4px 6px;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    border-top-right-radius: ${p => p.roundAll ? p.rounding || 3 : 0}px;
+    border-bottom-right-radius: ${p => p.roundAll ? p.rounding || 3 : 0}px;
     cursor: pointer;
     :hover {
         text-decoration: none;
@@ -184,7 +184,7 @@ export const OperandTextEl = styled.a<{
 
 export const EmptyText = () => <OperandTextEl color={colors.text.disabled}>[Empty]</OperandTextEl>;
 
-export class MenuSelectable extends React.Component<{ selected: boolean; onClick: () => void; text: string }> {
+export class MenuSelectable extends React.Component<{ selected: boolean; onClick: () => void; text: string | React.ReactNode }> {
     render() {
         return (
             <MenuSelectableItem onClick={this.props.onClick}>

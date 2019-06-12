@@ -148,7 +148,7 @@ export interface ICodeBuilderConfig {
     dataSource: DataSource;
     getTypeOperators: (type: TypeName) => UfOperator[];
     exprTypes: Map<ExprConstructor, UfExpression>;
-    createDefaultExpr?: (type: ExprConstructor, parent?: IExpression) => IExpression | undefined | null;
+    createDefaultExpr?: (type: ExprConstructor, parent?: IExpression, config?: IOperationConfig) => IExpression | undefined | null;
     operations: IOperationConfig[];
     getExprOptions?: (parent: IExpression | undefined, type?: TypeName, param?: IOperationParam) => IExprOption[] | undefined | null;
     viewOnly?: boolean;
@@ -280,8 +280,8 @@ export class CodeBuilder {
         }
     }
 
-    public createDefaultExpr<T>(type: TypedExprConstructor<T>, parent?: IExpression): T | null {
-        let result = this.config.createDefaultExpr ? this.config.createDefaultExpr(type, parent) : undefined;
+    public createDefaultExpr<T>(type: TypedExprConstructor<T>, parent?: IExpression, config?: IOperationConfig): T | null {
+        let result = this.config.createDefaultExpr ? this.config.createDefaultExpr(type, parent, config) : undefined;
 
         if (result === undefined) {
             result = new type();
@@ -345,7 +345,7 @@ export class CodeBuilder {
     }
 
     public createOperation(config: IOperationConfig, parent?: IExpression) {
-        const result = this.createDefaultExpr(Operation, parent);
+        const result = this.createDefaultExpr(Operation, parent, config);
         if (result === null)
             throw `Just create the thing. You returned null when asked for a default Operation. That means you don't want one created. Did you know that? Just return undefined instead. `;
         result.name = config.name;

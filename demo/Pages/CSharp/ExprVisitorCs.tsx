@@ -14,6 +14,7 @@ import {
 } from '../../../src/Models/ExpressionModels';
 import styled from 'styled-components';
 import { colors } from '../../../src/Components/Style';
+import { MathOperation } from './MathExpr';
 
 export default class ExprVisitorCs extends VisitorBase<React.ReactNode> {
     private indentation = 0;
@@ -38,7 +39,11 @@ export default class ExprVisitorCs extends VisitorBase<React.ReactNode> {
     }
 
     public visitNestedField(expr: NestedField): React.ReactNode {
-        return this.renderToken(expr.path.join('.'), colors.text.default, expr);
+        if (!expr.path || !expr.path.length) {
+            return this.renderToken('null', colors.text.default, expr);
+        } else {
+            return this.renderToken(expr.path.join('.'), colors.text.default, expr);
+        }
     }
     public visitEmpty(expr: Empty) {
         return this.renderInvalid(expr);
@@ -166,15 +171,56 @@ export default class ExprVisitorCs extends VisitorBase<React.ReactNode> {
         return this.renderToken(`"${value}"`, colors.labels.purple, expr);
     }
     public visitOperation(expr: Operation) {
-        switch (expr.name) {
-            case 'filter':
-                return this.visit(expr.operands[0]);
-            case 'if':
-                return this.renderIf(expr as IfOperation);
-            case 'choose':
-                return this.renderChoose(expr);
-            default:
-                return this.renderDefaultOperation(expr);
+        if (expr instanceof MathOperation) {
+            return this.visitMathOperation(expr);
+        } else {
+            switch (expr.name) {
+                case 'filter':
+                    return this.visit(expr.operands[0]);
+                case 'if':
+                    return this.renderIf(expr as IfOperation);
+                case 'choose':
+                    return this.renderChoose(expr);
+                default:
+                    return this.renderDefaultOperation(expr);
+            }
+        }
+    }
+    private visitMathOperation(expr: MathOperation) {
+        const left = this.visit(expr.left),
+            right = this.visit(expr.right);
+        if (expr.name === 'exponentiate') {
+            return (
+                <>
+                    {this.renderToken('Math.Power', colors.labels.purple, expr)}({left}, {right})
+                </>
+            );
+        } else {
+            let operator = '';
+            switch (expr.name) {
+                case 'add':
+                    operator = ' + ';
+                    break;
+                case 'subtract':
+                    operator = ' - ';
+                    break;
+                case 'multiply':
+                    operator = ' * ';
+                    break;
+                case 'divide':
+                    operator = ' / ';
+                    break;
+                case 'modulus':
+                    operator = ' % ';
+                    break;
+            }
+            return (
+                <>
+                    ({left}
+                    {this.renderToken(operator, colors.labels.purple, expr)}
+                    {right})
+                </>
+            );
         }
     }
     private renderDefaultOperation(expr: Operation) {
